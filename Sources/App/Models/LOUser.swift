@@ -34,8 +34,8 @@ func login(req: Request)-> EventLoopFuture<LOUser>{
         var groupName: String
         var groupIdetifier: String
     }
-    
-    let loginRequest: LoginRequest =   try! req.query.decode(LoginRequest.self)
+    do{
+    let loginRequest: LoginRequest =   try req.query.decode(LoginRequest.self)
     return  LOGroup.query(on: req)
         .filter(\.idetifier, .equal, loginRequest.groupIdetifier)
         .filter(\.name, .equal, loginRequest.groupName)
@@ -65,5 +65,11 @@ func login(req: Request)-> EventLoopFuture<LOUser>{
                 })
             
         })
+        
+    }catch{
+        let result = req.eventLoop.newPromise(LOUser.self)
+        result.succeed(result: LOUser.init(identifier: ""))
+        return result.futureResult
+    }
 }
     
