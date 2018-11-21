@@ -3,12 +3,18 @@ import Vapor
 import MySQL
 import FluentMySQL
 import Authentication
- 
+import Leaf
+
 typealias MySQLDatabaseCache = DatabaseKeyedCache<ConfiguredDatabase<MySQLDatabase>>
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     
+    /// Leaf
+    try services.register(LeafProvider())
+    //    PlaintextRenderer LeafRenderer 这两种可供选择
+    config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+
     
     var nioServer = NIOServerConfig.default()
     #if os(macOS)

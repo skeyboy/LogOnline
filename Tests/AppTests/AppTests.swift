@@ -1,5 +1,7 @@
 import App
+#if os(macOS)
 import Alamofire
+#endif
 import XCTest
 
 final class AppTests: XCTestCase {
@@ -12,6 +14,7 @@ final class AppTests: XCTestCase {
         // add your tests here
         XCTAssert(true)
     }
+    #if os(macOS)
     func testLogin(){
        let login = "login?userIdentifier=123&groupName=ELB-T&groupIdetifier=1542678913.160826"
         Alamofire.request(host+login).responseJSON { (data:DataResponse<Any>) in
@@ -55,6 +58,10 @@ let deviceRegist = "log/api/regist/device?uuid=dddssd&deviceJsonInfo=234334"
     func testCreateLog(){
         
     }
+    #else
+    // Linux
+    
+    #endif
     
     static let allTests = [
         ("testNothing", testNothing)

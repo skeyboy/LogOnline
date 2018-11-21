@@ -5,6 +5,31 @@ extension LOUser: SessionAuthenticatable{}
 
 /// Register your application's routes here.
 public func routes(_ router: Router) throws {
+
+        router.get("/") { (req) -> EventLoopFuture<View> in
+            return try req.view().render("index")
+        }
+        
+        router.get("html2pdf") { (req:Request) -> EventLoopFuture<View> in
+            struct PDF : Content {
+                var url: String
+            }
+            let pdf: PDF = try req.query.decode(PDF.self)
+            
+            return try genereatePDF( pdf.url, destDir: req.publicPath, worker: req).then({ (fileUrl:String) -> EventLoopFuture<View> in
+                
+                
+                return try!  req.view().render("pdf", PDF.init(url: fileUrl))
+            })
+        }
+        
+        // Basic "Hello, world!" example
+        router.get("hello") { req in
+            return "Hello, world!"
+        }
+        
+
+        
     
     let logAPI = router.grouped("log/api/")
         .grouped(SessionsMiddleware.self);
