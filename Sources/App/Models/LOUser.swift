@@ -10,10 +10,7 @@ import Vapor
 import FluentMySQL
 import MySQL
 
-struct LOLoginResponse : Content{
-    var groupId: Int
-    var userId: Int
-}
+ 
 struct LOUser: MySQLModel {
     var id: Int?
     

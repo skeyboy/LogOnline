@@ -25,6 +25,9 @@ struct LOLog: MySQLModel {
         self.query = query
         self.responseBody = responseBody
     }
+    init() {
+        self.init(groupId: 0, uDevicePivotId: 0, query: "", responseBody: "")
+    }
 }
 extension LOLog{
     var uDevicePivot:Parent<LOLog, LOUserDevicePivot>{

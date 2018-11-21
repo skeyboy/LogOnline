@@ -3,10 +3,24 @@ import Vapor
 import MySQL
 import FluentMySQL
 import Authentication
+ 
 typealias MySQLDatabaseCache = DatabaseKeyedCache<ConfiguredDatabase<MySQLDatabase>>
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
+    
+    
+    var nioServer = NIOServerConfig.default()
+    #if os(macOS)
+    nioServer.port = 8080
+    #else
+    nioServer.port = 33333
+    #endif
+    nioServer.hostname = "0.0.0.0"
+    nioServer.maxBodySize = 1024 * 1024 * 100 * 10 //100M
+    services.register(nioServer)
+    
+    
     /// Register providers first
     try services.register(FluentSQLiteProvider())
 

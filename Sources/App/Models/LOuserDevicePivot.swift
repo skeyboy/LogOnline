@@ -25,7 +25,10 @@ struct LOUserDevicePivot: MySQLPivot {
     var id: Int?
     var userId: Int
     var deviceId: Int
-    
+    init(userId uId: Int, deviceId dId: Int) {
+        self.userId = uId
+        self.deviceId = dId
+    }
 }
 extension LOUserDevicePivot: MySQLMigration{}
 extension LOUserDevicePivot: Content{}
