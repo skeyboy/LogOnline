@@ -16,17 +16,21 @@ struct LOLog: MySQLModel {
     /// 用户 和 device的映射
     var uDevicePivotId: Int
     var groupId: Int
-    
+    var shorURL: String
     var query: String
-    var responseBody: String
-    init( groupId: Int, uDevicePivotId: Int, query: String, responseBody: String) {
+    var responseBody:Data
+    
+    init( groupId: Int, uDevicePivotId: Int, shorURL: String, query: String, responseBody: String) {
          self.groupId = groupId
         self.uDevicePivotId = uDevicePivotId
         self.query = query
-        self.responseBody = responseBody
+        self.shorURL = shorURL
+        self.responseBody = responseBody.data(using: String.Encoding.utf8
+            )!
+        
     }
     init() {
-        self.init(groupId: 0, uDevicePivotId: 0, query: "", responseBody: "")
+        self.init(groupId: 0, uDevicePivotId: 0,shorURL:"", query: "", responseBody: "")
     }
 }
 extension LOLog{

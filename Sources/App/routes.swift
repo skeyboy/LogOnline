@@ -35,6 +35,44 @@ public func routes(_ router: Router) throws {
         .grouped(SessionsMiddleware.self);
     
     
+    ///log/api/log/scan?uDevicePivotId=2&groupId
+    //查看日志 对应 组 + 当前设备
+    logAPI.get("log/scan") { (req:Request) ->
+        EventLoopFuture<LOResponse<LOLogScanResponse>> in
+        
+        struct LogScan : Content {
+            var uDevicePivotId : Int
+            var groupId : Int
+        }
+        do{
+        let logScan =  try req.query.decode(LogScan.self)
+        
+     return   LOLog.query(on: req)
+        .filter(\LOLog.groupId, .equal, logScan.groupId)
+        .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
+        .range(lower: 0, upper: 20)
+            .all().flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
+                let items = logs.map({ (log:LOLog) -> LOLogScan in
+                
+                    return LOLogScan.init(
+                        shortURL: log.shorURL
+                        ,query:log.query,
+                         body:String.init(data: log.responseBody, encoding: String.Encoding.utf8)!)
+                })
+                let result = req.eventLoop.newPromise(LOResponse<LOLogScanResponse>.self)
+                result.succeed(result: LOResponse<LOLogScanResponse>.init(code: LOResponseStatus.ok, data: LOLogScanResponse(logs:items), msg: "OK"))
+                return result.futureResult
+                
+            })
+            
+        }catch{
+            
+            
+            let result = req.eventLoop.newPromise(LOResponse<LOLogScanResponse>.self)
+            result.succeed(result: LOResponse<LOLogScanResponse>.init(code: LOResponseStatus.ok, data: LOLogScanResponse(logs:[LOLogScan]()), msg: "OK"))
+            return result.futureResult
+        }
+    }
     //创建组
     router.get("regist/group") { (req:Request) ->  EventLoopFuture<LOResponse<LOGroup>>  in
         var group = try req.query.decode(LOGroup.self)
@@ -71,12 +109,15 @@ public func routes(_ router: Router) throws {
             struct Log: Content {
                 var groupId: Int
                 var uDevicePivotId: Int
+                var shorURL: String
                 var query: String
                 var responseBody: String
             }
             return try req.content.decode(Log.self)
                 .flatMap({ (log:Log) -> EventLoopFuture<LOLog> in
-                return   LOLog.init( groupId: log.groupId, uDevicePivotId:log.uDevicePivotId, query: log.query, responseBody: log.responseBody)
+                return   LOLog.init( groupId: log.groupId, uDevicePivotId:log.uDevicePivotId,
+                                     shorURL: log.shorURL,
+                                     query: log.query, responseBody: log.responseBody)
                     .create(on: req)
                 }).flatMap({ (log:LOLog) -> EventLoopFuture<LOResponse<LOLog>> in
                     let result = req.eventLoop.newPromise(LOResponse<LOLog>.self)
