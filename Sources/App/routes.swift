@@ -51,17 +51,17 @@ public func routes(_ router: Router) throws {
         do{
             var logScan =  try req.query.decode(LogScan.self)
             
-            if logScan.pno == nil {
+            if logScan.pno == nil || logScan.pno! <= 0 {
                  logScan.pno = 1
             }
-            if  logScan.max  == nil {
+            if  logScan.max  == nil  || logScan.max! <= 0 {
                  logScan.max = 20
             }
         
      return   LOLog.query(on: req)
         .filter(\LOLog.groupId, .equal, logScan.groupId)
         .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
-        .range(lower: logScan.max! * logScan.pno!, upper: logScan.max! * ( 1 + logScan.pno!))
+        .range(lower: logScan.max! * ( logScan.pno! - 1 ), upper: logScan.max! * logScan.pno!)
             .all().flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                 let items = logs.map({ (log:LOLog) -> LOLogScan in
 
