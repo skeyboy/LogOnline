@@ -37,7 +37,7 @@ public func routes(_ router: Router) throws {
     
     ///log/api/log/scan?uDevicePivotId=2&groupId&mode=0&level=1&pno=0&max
     //查看日志 对应 组 + 当前设备
-    logAPI.get("log/scan") { (req:Request) ->
+    router.get("log/scan") { (req:Request) ->
         EventLoopFuture<LOResponse<LOLogScanResponse>> in
         
         struct LogScan : Content {
@@ -73,7 +73,7 @@ public func routes(_ router: Router) throws {
             
             
             let result = req.eventLoop.newPromise(LOResponse<LOLogScanResponse>.self)
-            result.succeed(result: LOResponse<LOLogScanResponse>.init(code: LOResponseStatus.ok, data: LOLogScanResponse(logs:[LOLogScan]()), msg: "OK"))
+            result.succeed(result: LOResponse<LOLogScanResponse>.init(code: LOResponseStatus.noAuth, data: LOLogScanResponse(logs:[LOLogScan]()), msg: "\(error)"))
             return result.futureResult
         }
     }
