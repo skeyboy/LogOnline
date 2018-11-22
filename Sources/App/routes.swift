@@ -60,7 +60,9 @@ public func routes(_ router: Router) throws {
         
      return   LOLog.query(on: req)
         .filter(\LOLog.groupId, .equal, logScan.groupId)
+        .sort(\LOLog.id,.descending)
         .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
+
         .range(lower: logScan.max! * ( logScan.pno! - 1 ), upper: logScan.max! * logScan.pno!)
             .all().flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                 let items = logs.map({ (log:LOLog) -> LOLogScan in
