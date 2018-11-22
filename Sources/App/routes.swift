@@ -35,7 +35,7 @@ public func routes(_ router: Router) throws {
         .grouped(SessionsMiddleware.self);
     
     
-    ///log/api/log/scan?uDevicePivotId=2&groupId
+    ///log/api/log/scan?uDevicePivotId=2&groupId&mode=0&level=1&pno=0&max
     //查看日志 对应 组 + 当前设备
     logAPI.get("log/scan") { (req:Request) ->
         EventLoopFuture<LOResponse<LOLogScanResponse>> in
@@ -43,6 +43,10 @@ public func routes(_ router: Router) throws {
         struct LogScan : Content {
             var uDevicePivotId : Int
             var groupId : Int
+            var mode: LogMode = .debug
+            var level: LogLevel = .info
+            var pno: Int = 0
+            var max: Int = 20
         }
         do{
         let logScan =  try req.query.decode(LogScan.self)
@@ -50,12 +54,12 @@ public func routes(_ router: Router) throws {
      return   LOLog.query(on: req)
         .filter(\LOLog.groupId, .equal, logScan.groupId)
         .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
-        .range(lower: 0, upper: 20)
+        .range(lower: logScan.max * logScan.pno, upper: logScan.max * ( 1 + logScan.pno))
             .all().flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                 let items = logs.map({ (log:LOLog) -> LOLogScan in
                 
                     return LOLogScan.init(
-                        shortURL: log.shorURL
+                        shortURL: log.shortURL
                         ,query:log.query,
                          body:String.init(data: log.responseBody, encoding: String.Encoding.utf8)!)
                 })
@@ -116,7 +120,7 @@ public func routes(_ router: Router) throws {
             return try req.content.decode(Log.self)
                 .flatMap({ (log:Log) -> EventLoopFuture<LOLog> in
                 return   LOLog.init( groupId: log.groupId, uDevicePivotId:log.uDevicePivotId,
-                                     shorURL: log.shorURL,
+                                     shortURL: log.shorURL,
                                      query: log.query, responseBody: log.responseBody)
                     .create(on: req)
                 }).flatMap({ (log:LOLog) -> EventLoopFuture<LOResponse<LOLog>> in
