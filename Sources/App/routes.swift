@@ -35,7 +35,7 @@ public func routes(_ router: Router) throws {
         .grouped(SessionsMiddleware.self);
     
     
-    ///log/api/log/scan?uDevicePivotId=2&groupId&mode=0&level=1&pno=0&max
+    /// log/scan?uDevicePivotId=2&groupId&mode=0&level=1&pno=0&max
     //查看日志 对应 组 + 当前设备
     router.get("log/scan") { (req:Request) ->
         EventLoopFuture<LOResponse<LOLogScanResponse>> in
@@ -45,20 +45,28 @@ public func routes(_ router: Router) throws {
             var groupId : Int
             var mode: LogMode = .debug
             var level: LogLevel = .info
-            var pno: Int = 0
-            var max: Int = 20
+            var pno: Int? = 0
+            var max: Int? = 20
         }
         do{
-        let logScan =  try req.query.decode(LogScan.self)
+            var logScan =  try req.query.decode(LogScan.self)
+            
+            if logScan.pno == nil {
+                 logScan.pno = 1
+            }
+            if  logScan.max  == nil {
+                 logScan.max = 20
+            }
         
      return   LOLog.query(on: req)
         .filter(\LOLog.groupId, .equal, logScan.groupId)
         .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
-        .range(lower: logScan.max * logScan.pno, upper: logScan.max * ( 1 + logScan.pno))
+        .range(lower: logScan.max! * logScan.pno!, upper: logScan.max! * ( 1 + logScan.pno!))
             .all().flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                 let items = logs.map({ (log:LOLog) -> LOLogScan in
-                
+
                     return LOLogScan.init(
+                        id: log.id!,
                         shortURL: log.shortURL
                         ,query:log.query,
                          body:String.init(data: log.responseBody, encoding: String.Encoding.utf8)!)
