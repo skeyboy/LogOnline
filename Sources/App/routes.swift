@@ -113,14 +113,14 @@ public func routes(_ router: Router) throws {
             struct Log: Content {
                 var groupId: Int
                 var uDevicePivotId: Int
-                var shorURL: String
+                var shortURL: String
                 var query: String
                 var responseBody: String
             }
             return try req.content.decode(Log.self)
                 .flatMap({ (log:Log) -> EventLoopFuture<LOLog> in
                 return   LOLog.init( groupId: log.groupId, uDevicePivotId:log.uDevicePivotId,
-                                     shortURL: log.shorURL,
+                                     shortURL: log.shortURL,
                                      query: log.query, responseBody: log.responseBody)
                     .create(on: req)
                 }).flatMap({ (log:LOLog) -> EventLoopFuture<LOResponse<LOLog>> in
