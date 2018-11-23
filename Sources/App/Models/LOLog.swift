@@ -34,14 +34,14 @@ struct LOLog: MySQLModel {
     var level: Int = LogLevel.info.rawValue
     
     init( groupId: Int, uDevicePivotId: Int, shortURL: String, query: String, responseBody: String, mode:LogMode = LogMode.debug, level: LogLevel = LogLevel.info) {
-         self.groupId = groupId
+        self.groupId = groupId
         self.uDevicePivotId = uDevicePivotId
         self.query = query
         self.shortURL = shortURL
-//        self.responseBody = responseBody.data(using: String.Encoding.utf8
-//            )!
+        //        self.responseBody = responseBody.data(using: String.Encoding.utf8
+        //            )!
         self.responseBody = responseBody
-
+        
         self.mode = mode.rawValue
         self.level  = level.rawValue
         
@@ -49,9 +49,10 @@ struct LOLog: MySQLModel {
     
     static func prepare(on connection: MySQLConnection) -> Future<Void> {
         return MySQLDatabase.create(self, on: connection) { builder in
-            builder.field(for: \.id)
+            
+            builder.field(for: \.id, type: MySQLDataType.int, MySQLColumnConstraint.primaryKey())
             builder.field(for: \.uDevicePivotId)
-            builder.field(for:\.groupId)
+            builder.field(for:\.groupId,type:.int, MySQLColumnConstraint.notNull())
             builder.field(for: \.shortURL)
             builder.field(for: \.responseBody, type: .text)
             builder.field(for: \.query)
@@ -66,12 +67,12 @@ struct LOLog: MySQLModel {
 }
 extension LOLog{
     var uDevicePivot:Parent<LOLog, LOUserDevicePivot>{
-    return parent(\.uDevicePivotId)
+        return parent(\.uDevicePivotId)
     }
     public static var defaultContentType: MediaType {
         return MediaType.formData
     }
 }
- 
+
 extension LOLog: MySQLMigration{}
 extension LOLog: Content{}
