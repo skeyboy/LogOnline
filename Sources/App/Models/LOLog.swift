@@ -29,21 +29,37 @@ struct LOLog: MySQLModel {
     var groupId: Int
     var shortURL: String
     var query: String
-    var responseBody:Data
-    var mode: LogMode = .debug
-    var level: LogLevel = .info
+    var responseBody:String
+    var mode: Int = LogMode.debug.rawValue
+    var level: Int = LogLevel.info.rawValue
     
     init( groupId: Int, uDevicePivotId: Int, shortURL: String, query: String, responseBody: String, mode:LogMode = LogMode.debug, level: LogLevel = LogLevel.info) {
          self.groupId = groupId
         self.uDevicePivotId = uDevicePivotId
         self.query = query
         self.shortURL = shortURL
-        self.responseBody = responseBody.data(using: String.Encoding.utf8
-            )!
-        self.mode = mode
-        self.level  = level
+//        self.responseBody = responseBody.data(using: String.Encoding.utf8
+//            )!
+        self.responseBody = responseBody
+
+        self.mode = mode.rawValue
+        self.level  = level.rawValue
         
     }
+    
+    static func prepare(on connection: MySQLConnection) -> Future<Void> {
+        return MySQLDatabase.create(self, on: connection) { builder in
+            builder.field(for: \.id)
+            builder.field(for: \.uDevicePivotId)
+            builder.field(for:\.groupId)
+            builder.field(for: \.shortURL)
+            builder.field(for: \.responseBody, type: .text)
+            builder.field(for: \.query)
+            builder.field(for: \.mode)
+            builder.field(for: \.level)
+        }
+    }
+    
     init() {
         self.init(groupId: 0, uDevicePivotId: 0,shortURL:"", query: "", responseBody: "")
     }
