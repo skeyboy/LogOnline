@@ -92,6 +92,9 @@ func config_db(database: inout DatabasesConfig) -> MySQLDatabase{
         transport:   .cleartext
     )
     let mysqlDb: MySQLDatabase = MySQLDatabase.init(config: mysqlConfig)
+    defer {
+        database.disableReferences(on: .mysql)
+    }
     database.add(database: mysqlDb, as: DatabaseIdentifier<MySQLDatabase>.mysql)
     return mysqlDb
 }

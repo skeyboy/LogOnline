@@ -12,8 +12,15 @@ struct LOLogScanResponse : Content {
     var logs : [ LOLogScan ]
 }
 struct LOLogScan : Content {
-    var id: Int
-    var shortURL: String
-    var query : String
-    var body : String
+    var id: Int?
+    var shortURL: String?
+    var query : String?
+    var body : String?
+}
+
+struct LOLogScanDetail: Content {
+    var detail: LOLog?
+    init(detail: LOLog?) {
+        self.detail = detail
+    }
 }
