@@ -37,14 +37,23 @@ public func routes(_ router: Router) throws {
     router.get("group/scan") { (req:Request) -> EventLoopFuture<LOResponse<[LOGroupScanResponse]>> in
         struct GroupScanReq: Content {
             var groupdId: Int?
+            var pno: Int?
+            var max: Int?
         }
         
-        let gq = try! req.query.decode(GroupScanReq.self)
-        let queryBuilder =   LOGroup.query(on: req)
+        var gq = try! req.query.decode(GroupScanReq.self)
+        var queryBuilder =   LOGroup.query(on: req)
         
         if gq.groupdId != nil {
-            queryBuilder.filter(\.id, .equal, gq.groupdId)
+        queryBuilder =    queryBuilder.filter(\.id, .equal, gq.groupdId)
         }
+        if gq.pno == nil {
+            gq.pno = 1
+        }
+        if gq.max == nil {
+            gq.max = 20
+        }
+      queryBuilder =  queryBuilder.range(lower: (gq.pno! - 1) * (gq.max!), upper: gq.pno! * gq.max!)
         
      return  queryBuilder
         .all()
@@ -56,24 +65,42 @@ public func routes(_ router: Router) throws {
             })
             
             return groupPs.flatten(on: req)
-            }).flatMap({ (gps:[LOGroupUserPivot]) -> EventLoopFuture<[(LOUserDevicePivot,LODevice)]> in
+            }).flatMap({ (gps:[LOGroupUserPivot]) -> EventLoopFuture<[[(LOUserDevicePivot, LODevice)]]> in
                 
-              let devices =  gps.map({ (gp:LOGroupUserPivot) -> EventLoopFuture<(LOUserDevicePivot,LODevice)> in
-                   return LOUserDevicePivot.query(on: req)
-                        .filter(\LOUserDevicePivot.userId, .equal, gp.userId)
-                        .first()
-                        .flatMap({ (udp:LOUserDevicePivot?) -> EventLoopFuture<(LOUserDevicePivot,LODevice)> in
-                            return LODevice.find(udp!.deviceId, on: req).map({ (d:LODevice?) -> (LOUserDevicePivot,LODevice) in
-                               
-                               return (udp!, d!)
+              let devices =  gps.map({ (gp:LOGroupUserPivot) -> EventLoopFuture<[(LOUserDevicePivot, LODevice)]> in
+                
+             return   LOUserDevicePivot.query(on: req)
+                    .filter(\LOUserDevicePivot.userId, .equal, gp.userId)
+                    .all().flatMap({ (item:[LOUserDevicePivot]) -> EventLoopFuture<[(LOUserDevicePivot, LODevice)]> in
+                        
+                        let items =    item.map({ (udp:LOUserDevicePivot) -> EventLoopFuture<(LOUserDevicePivot,LODevice) > in
+                        return LODevice.find(udp.deviceId, on: req).map({ (d:LODevice?) -> (LOUserDevicePivot,LODevice) in
+                                
+                            return (udp, d!)
                             })
+                        })
+                     return   items.flatten(on: req)
                     })
+
                 })
-                return devices.flatten(on: req)
-            }).flatMap({ (pd:[(LOUserDevicePivot,LODevice)]) -> EventLoopFuture<LOResponse<[LOGroupScanResponse]>> in
-                let value =   LOResponse<[LOGroupScanResponse]>.init(code: LOResponseStatus.ok, data: pd.map({ (item:(LOUserDevicePivot, LODevice)) -> LOGroupScanResponse in
-                    return LOGroupScanResponse.init(p: item.0, d: item.1)
-                }), msg: "OK")
+              return  devices.flatten(on: req)
+             }).flatMap({ (items:[[(LOUserDevicePivot, LODevice)]]) -> EventLoopFuture<[LOGroupScanResponse]> in
+                let values = items.compactMap({ (item:[(LOUserDevicePivot, LODevice)]) -> [LOGroupScanResponse] in
+                   return item.map({ (i:(LOUserDevicePivot, LODevice)) -> LOGroupScanResponse in
+                         return LOGroupScanResponse.init(p: i.0, d: i.1)
+                    })
+                   
+                })
+                var container = [LOGroupScanResponse]()
+                for i in values {
+                    container.append(contentsOf: i)
+                }
+                let result = req.eventLoop.newPromise([LOGroupScanResponse].self)
+                result.succeed(result: container)
+                return result.futureResult
+            }).flatMap({ (items:[LOGroupScanResponse]) -> EventLoopFuture<LOResponse<[LOGroupScanResponse]>> in
+                
+                let value =   LOResponse<[LOGroupScanResponse]>.init(code: LOResponseStatus.ok, data:items, msg: "OK")
                 
                 let result = req.eventLoop.newPromise(LOResponse<[LOGroupScanResponse]>.self)
                 

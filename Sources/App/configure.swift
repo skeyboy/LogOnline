@@ -71,14 +71,14 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 
 func config_db(database: inout DatabasesConfig) -> MySQLDatabase{
     
-    #if os(macOS)
-    let  hostname =   "127.0.0.1"
-    let password = "12345678"
-    
-    #else
+//    #if os(macOS)
+//    let  hostname =   "127.0.0.1"
+//    let password = "12345678"
+//
+//    #else
     let   hostname =  "192.168.3.61"
     let password = "123456"
-    #endif
+//    #endif
     
     let mysqlConfig : MySQLDatabaseConfig =   MySQLDatabaseConfig.init(
         hostname:   hostname,
