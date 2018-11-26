@@ -33,11 +33,59 @@ public func routes(_ router: Router) throws {
     
     let logAPI = router.grouped("log/api/")
         .grouped(SessionsMiddleware.self);
-    
+    // groudId 获取 用户 等基本信息
+    router.get("group/scan") { (req:Request) -> EventLoopFuture<LOResponse<[LOGroupScanResponse]>> in
+        struct GroupScanReq: Content {
+            var groupdId: Int?
+        }
+        
+        let gq = try! req.query.decode(GroupScanReq.self)
+        let queryBuilder =   LOGroup.query(on: req)
+        
+        if gq.groupdId != nil {
+            queryBuilder.filter(\.id, .equal, gq.groupdId)
+        }
+        
+     return  queryBuilder
+        .all()
+            .flatMap({ (groupds:[LOGroup]) -> EventLoopFuture<[LOGroupUserPivot]> in
+          let groupPs =  groupds.map({ (group:LOGroup) -> EventLoopFuture<LOGroupUserPivot> in
+                return LOGroupUserPivot.query(on: req).filter(\LOGroupUserPivot.groupId, .equal, group.id!).first().map({ (p:LOGroupUserPivot?) -> (LOGroupUserPivot) in
+                    return p!
+                })
+            })
+            
+            return groupPs.flatten(on: req)
+            }).flatMap({ (gps:[LOGroupUserPivot]) -> EventLoopFuture<[(LOUserDevicePivot,LODevice)]> in
+                
+              let devices =  gps.map({ (gp:LOGroupUserPivot) -> EventLoopFuture<(LOUserDevicePivot,LODevice)> in
+                   return LOUserDevicePivot.query(on: req)
+                        .filter(\LOUserDevicePivot.userId, .equal, gp.userId)
+                        .first()
+                        .flatMap({ (udp:LOUserDevicePivot?) -> EventLoopFuture<(LOUserDevicePivot,LODevice)> in
+                            return LODevice.find(udp!.deviceId, on: req).map({ (d:LODevice?) -> (LOUserDevicePivot,LODevice) in
+                               
+                               return (udp!, d!)
+                            })
+                    })
+                })
+                return devices.flatten(on: req)
+            }).flatMap({ (pd:[(LOUserDevicePivot,LODevice)]) -> EventLoopFuture<LOResponse<[LOGroupScanResponse]>> in
+                let value =   LOResponse<[LOGroupScanResponse]>.init(code: LOResponseStatus.ok, data: pd.map({ (item:(LOUserDevicePivot, LODevice)) -> LOGroupScanResponse in
+                    return LOGroupScanResponse.init(p: item.0, d: item.1)
+                }), msg: "OK")
+                
+                let result = req.eventLoop.newPromise(LOResponse<[LOGroupScanResponse]>.self)
+                
+                result.succeed(result: value)
+                return result.futureResult
+            })
+    }
     // log/detail?logId=12
     router.get("log/detail") { (req:Request) -> EventLoopFuture<LOResponse<LOLogScanDetail>>  in
         struct LogDetail: Content {
             var logId: Int
+            var groupId: Int?
         }
         do{
             let logDetail: LogDetail = try  req.query.decode(LogDetail.self)
