@@ -16,13 +16,12 @@ struct LOLogScan : Content {
     var shortURL: String?
     var query : String?
     var body : String?
+    var link : String?
 }
 
 struct LOLogScanDetail: Content {
     var detail: LOLog?
-    var link: String?
-    init(detail: LOLog?, link: String?) {
+     init(detail: LOLog?) {
         self.detail = detail
-        self.link = link
     }
 }

@@ -130,14 +130,13 @@ public func routes(_ router: Router) throws {
             
             return       LOLog.find(logDetail.logId, on: req).flatMap({ (log:LOLog?) -> EventLoopFuture<LOResponse<LOLogScanDetail>>  in
                 let result = req.eventLoop.newPromise(LOResponse<LOLogScanDetail>.self)
-                let link = "\(req.http.headers[.host]):33333/log/detail?logId=\(String(describing: log?.id!))"
-                result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: log, link:link), msg: "OK"))
+                result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: log), msg: "OK"))
                 return result.futureResult
             })
             
         }catch{
             let result = req.eventLoop.newPromise(LOResponse<LOLogScanDetail>.self)
-            result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: nil,link:nil), msg: "\(error)"))
+            result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: nil), msg: "\(error)"))
             return result.futureResult
         }
     }
@@ -173,12 +172,13 @@ public func routes(_ router: Router) throws {
                 .all()
                 .flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                     let items = logs.map({ (log:LOLog) -> LOLogScan in
-                        
+                        let link = "\(req.http.headers[.host]):33333/log/detail?logId=\(String(describing: log.id!))"
+
                         return LOLogScan.init(
                             id: log.id!,
                             shortURL: log.shortURL
                             ,query:log.query,
-                             body:nil)
+                             body:nil,link:link)
                     })
                     let result = req.eventLoop.newPromise(LOResponse<LOLogScanResponse>.self)
                     result.succeed(result: LOResponse<LOLogScanResponse>.init(code: LOResponseStatus.ok, data: LOLogScanResponse(logs:items), msg: "OK"))
