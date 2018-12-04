@@ -1,6 +1,7 @@
 import Vapor
 import FluentMySQL
 import Authentication
+import SwiftVaporPB
 extension LOUser: SessionAuthenticatable{}
 
 /// Register your application's routes here.
@@ -9,7 +10,6 @@ public func routes(_ router: Router) throws {
     router.get("/") { (req) -> EventLoopFuture<View> in
         return try req.view().render("index")
     }
-    
     router.get("html2pdf") { (req:Request) -> EventLoopFuture<View> in
         struct PDF : Content {
             var url: String
@@ -23,8 +23,19 @@ public func routes(_ router: Router) throws {
         })
     }
     
+    router.get("pb") { (req:Request) -> EventLoopFuture<PB<BookInfo>> in
+        let bookInfo =   BookInfo.with({ ( bookInfo:inout BookInfo) in
+            bookInfo.id = 123
+            bookInfo.author = "Jack"
+            bookInfo.title = "Hello"
+        })
+        let binaryData: Data = try! bookInfo.serializedData()
+
+         return try req.makePB(value: bookInfo)
+    }
     // Basic "Hello, world!" example
     router.get("hello") { req in
+        
         return "Hello, world!"
     }
     
@@ -119,15 +130,14 @@ public func routes(_ router: Router) throws {
             
             return       LOLog.find(logDetail.logId, on: req).flatMap({ (log:LOLog?) -> EventLoopFuture<LOResponse<LOLogScanDetail>>  in
                 let result = req.eventLoop.newPromise(LOResponse<LOLogScanDetail>.self)
-                
-                
-                result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: log), msg: "OK"))
+                let link = "\(req.http.headers[.host]):33333/log/detail?logId=\(String(describing: log?.id!))"
+                result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: log, link:link), msg: "OK"))
                 return result.futureResult
             })
             
         }catch{
             let result = req.eventLoop.newPromise(LOResponse<LOLogScanDetail>.self)
-            result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: nil), msg: "\(error)"))
+            result.succeed(result: LOResponse<LOLogScanDetail>.init(code: LOResponseStatus.failure, data: LOLogScanDetail.init(detail: nil,link:nil), msg: "\(error)"))
             return result.futureResult
         }
     }

@@ -20,7 +20,9 @@ struct LOLogScan : Content {
 
 struct LOLogScanDetail: Content {
     var detail: LOLog?
-    init(detail: LOLog?) {
+    var link: String?
+    init(detail: LOLog?, link: String?) {
         self.detail = detail
+        self.link = link
     }
 }
