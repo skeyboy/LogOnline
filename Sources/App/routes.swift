@@ -172,7 +172,7 @@ public func routes(_ router: Router) throws {
                 .all()
                 .flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in
                     let items = logs.map({ (log:LOLog) -> LOLogScan in
-                        let link = "\(req.http.headers[.host]):33333/log/detail?logId=\(String(describing: log.id!))"
+                        let link = "http://\(req.http.headers[.host].first!)/log/detail?logId=\(String(describing: log.id!))"
 
                         return LOLogScan.init(
                             id: log.id!,
