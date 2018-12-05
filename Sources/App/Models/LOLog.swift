@@ -45,7 +45,7 @@ struct LOLog: MySQLModel {
         self.mode = mode.rawValue
         self.level  = level.rawValue
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"//YYYY-MM-DD HH:MM:SS
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
 
         
         self.date = formatter.string(from: Date.init())
@@ -62,7 +62,7 @@ struct LOLog: MySQLModel {
             builder.field(for: \.query)
             builder.field(for: \.mode)
             builder.field(for: \.level)
-            builder.field(for: \.date, type: .datetime )
+            builder.field(for: \.date, type: .text )
         }
     }
     
