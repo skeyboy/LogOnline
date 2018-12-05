@@ -44,7 +44,7 @@ struct LOLog: MySQLModel {
         
         self.mode = mode.rawValue
         self.level  = level.rawValue
-        
+        self.date = Date()
     }
     
     static func prepare(on connection: MySQLConnection) -> Future<Void> {
