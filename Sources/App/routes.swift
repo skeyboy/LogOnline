@@ -147,8 +147,8 @@ public func routes(_ router: Router) throws {
         EventLoopFuture<LOResponse<LOLogScanResponse>> in
         
         struct LogScan : Content {
-            var uDevicePivotId : Int
-            var groupId : Int
+            var uDevicePivotId : Int?
+            var groupId : Int?
             var mode: LogMode = .debug
             var level: LogLevel = .info
             var pno: Int? = 0
@@ -163,11 +163,14 @@ public func routes(_ router: Router) throws {
             if  logScan.max  == nil  || logScan.max! <= 0 {
                 logScan.max = 10
             }
-            
-            return   LOLog.query(on: req)
-                .filter(\LOLog.groupId, .equal, logScan.groupId)
-                .sort(\LOLog.id,.descending)
-                .filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId)
+            var queryBuilder = LOLog.query(on: req)
+            if nil !=  logScan.groupId {
+            queryBuilder =    queryBuilder.filter(\LOLog.groupId, .equal, logScan.groupId!)
+            }
+            if nil != logScan.uDevicePivotId {
+              queryBuilder =  queryBuilder.filter(\LOLog.uDevicePivotId, .equal, logScan.uDevicePivotId!)
+            }
+            return  queryBuilder.sort(\LOLog.id,.descending)
                 .range(lower: logScan.max! * ( logScan.pno! - 1 ), upper: logScan.max! * logScan.pno!)
                 .all()
                 .flatMap({ ( logs :[ LOLog ] ) -> EventLoopFuture<LOResponse<LOLogScanResponse>> in

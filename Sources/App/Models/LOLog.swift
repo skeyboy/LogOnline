@@ -32,7 +32,7 @@ struct LOLog: MySQLModel {
     var responseBody:String
     var mode: Int = LogMode.debug.rawValue
     var level: Int = LogLevel.info.rawValue
-    
+    var date: Date = Date()
     init( groupId: Int, uDevicePivotId: Int, shortURL: String, query: String, responseBody: String, mode:LogMode = LogMode.debug, level: LogLevel = LogLevel.info) {
         self.groupId = groupId
         self.uDevicePivotId = uDevicePivotId
@@ -58,6 +58,7 @@ struct LOLog: MySQLModel {
             builder.field(for: \.query)
             builder.field(for: \.mode)
             builder.field(for: \.level)
+            builder.field(for: \.date, type: .date )
         }
     }
     
