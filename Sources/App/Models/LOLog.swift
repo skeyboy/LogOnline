@@ -32,7 +32,7 @@ struct LOLog: MySQLModel {
     var responseBody:String
     var mode: Int = LogMode.debug.rawValue
     var level: Int = LogLevel.info.rawValue
-    var date: TimeInterval
+    var date: String
     init( groupId: Int, uDevicePivotId: Int, shortURL: String, query: String, responseBody: String, mode:LogMode = LogMode.debug, level: LogLevel = LogLevel.info) {
         self.groupId = groupId
         self.uDevicePivotId = uDevicePivotId
@@ -44,7 +44,11 @@ struct LOLog: MySQLModel {
         
         self.mode = mode.rawValue
         self.level  = level.rawValue
-        self.date = Date.init().timeIntervalSince1970
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"//YYYY-MM-DD HH:MM:SS
+
+        
+        self.date = formatter.string(from: Date.init())
     }
     
     static func prepare(on connection: MySQLConnection) -> Future<Void> {
@@ -58,7 +62,7 @@ struct LOLog: MySQLModel {
             builder.field(for: \.query)
             builder.field(for: \.mode)
             builder.field(for: \.level)
-            builder.field(for: \.date, type: .date )
+            builder.field(for: \.date, type: .datetime )
         }
     }
     
